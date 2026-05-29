@@ -31,3 +31,11 @@ fix5
                                                         './asset/zero_shot_prompt.wav', stream=False)):
         torchaudio.save('instruct_{}.wav'.format(i), j['tts_speech'], cosyvoice.sample_rate)
 】
+
+
+
+fix6
+
+你帮我扫描一下这个示例函数【cosyvoice3_example()】解释一下它有几种用法
+我的最终使用场景是，用户上传一个30秒的音频文件上来后，然后输入一段文本，我的系统能够，使用他的音色去生成一个新的音频文件。
+

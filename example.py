@@ -73,19 +73,26 @@ def cosyvoice3_example():
     """
     cosyvoice = AutoModel(model_dir='pretrained_models/Fun-CosyVoice3-0.5B')
 
+    #---------------------------------------------------------------------------------------------------------------------------------------------------------
+    # 呼吸控制、混合语言  ---会使用这个上传文件的音色---
     # fine grained control, for supported control, check cosyvoice/tokenizer/tokenizer.py#L280
     for i, j in enumerate(cosyvoice.inference_cross_lingual('You are a helpful assistant.<|endofprompt|>[breath]因为他们那一辈人[breath]在乡里面住的要习惯一点，[breath]邻居都很活络，[breath]嗯，都很熟悉。[breath]',
                                                             './asset/zero_shot_prompt.wav', stream=False)):
         torchaudio.save('fine_grained_control_{}.wav'.format(i), j['tts_speech'], cosyvoice.sample_rate)
 
-    # 指令控制模式
+    #---------------------------------------------------------------------------------------------------------------------------------------------------------
+    # 指令控制模式（可以控制方言、语速、风格）   ---会使用这个上传文件的音色---
     # instruct usage, for supported control, check cosyvoice/utils/common.py#L28
     for i, j in enumerate(cosyvoice.inference_instruct2('好少咯，一般系放嗰啲国庆啊，中秋嗰啲可能会咯。', 'You are a helpful assistant. 请用广东话表达。<|endofprompt|>',
                                                         './asset/zero_shot_prompt.wav', stream=False)):
-        torchaudio.save('instruct_{}.wav'.format(i), j['tts_speech'], cosyvoice.sample_rate)
-    for i, j in enumerate(cosyvoice.inference_instruct2('收到好友从远方寄来的生日礼物，那份意外的惊喜与深深的祝福让我心中充满了甜蜜的快乐，笑容如花儿般绽放。', 'You are a helpful assistant. 请用尽可能快地语速说一句话。<|endofprompt|>',
+        torchaudio.save('instruct_广东话_{}.wav'.format(i), j['tts_speech'], cosyvoice.sample_rate)
+    for i, j in enumerate(cosyvoice.inference_instruct2('收到老朋友从老远地方寄过来的生日礼物，搿份突然的欢喜跟暖心的祝福，搞得我心里甜滋滋的，快活极哒。',
+                                                        'You are a helpful assistant. 请用湖南邵东话表达。<|endofprompt|>','./asset/zero_shot_prompt.wav', stream=False)):
+        torchaudio.save('instruct_邵东话_{}.wav'.format(i), j['tts_speech'], cosyvoice.sample_rate)
+    for i, j in enumerate(cosyvoice.inference_instruct2('收到好友从远方寄来的生日礼物，那份意外的惊喜与深深的祝福让我心中充满了甜蜜的快乐，笑容如花儿般绽放。',
+                                                        'You are a helpful assistant. 请用尽可能快地语速说一句话。<|endofprompt|>',
                                                         './asset/zero_shot_prompt.wav', stream=False)):
-        torchaudio.save('instruct_{}.wav'.format(i), j['tts_speech'], cosyvoice.sample_rate)
+        torchaudio.save('instruct_语速快_{}.wav'.format(i), j['tts_speech'], cosyvoice.sample_rate)
 
     #---------------------------------------------------------------------------------------------------------------------------------------------------------
     # 零样本使用调用模式-必须要有和语音的文本哈才能使用
