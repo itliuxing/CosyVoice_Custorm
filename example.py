@@ -72,13 +72,6 @@ def cosyvoice3_example():
     """ CosyVoice3 Usage, check https://funaudiollm.github.io/cosyvoice3/ for more details
     """
     cosyvoice = AutoModel(model_dir='pretrained_models/Fun-CosyVoice3-0.5B')
-    # zero_shot usage 零样本使用调用模式
-    # for i, j in enumerate(cosyvoice.inference_zero_shot('八百标兵奔北坡，北坡炮兵并排跑，炮兵怕把标兵碰，标兵怕碰炮兵炮。', 'You are a helpful assistant.<|endofprompt|>希望你以后能够做的比我还好呦。',
-    #                                                     './asset/zero_shot_prompt.wav', stream=False)):
-    #     torchaudio.save('zero_shot_{}.wav'.format(i), j['tts_speech'], cosyvoice.sample_rate)
-    for i, j in enumerate(cosyvoice.inference_zero_shot('八百标兵奔北坡，北坡炮兵并排跑，炮兵怕把标兵碰，标兵怕碰炮兵炮。', 'You are a helpful assistant.<|endofprompt|>希望你以后能够做的比我还好呦。',
-                                                        './asset/my_custom_voice_short.wav', stream=False)):
-        torchaudio.save('zero_shot_{}.wav'.format(i), j['tts_speech'], cosyvoice.sample_rate)
 
     # fine grained control, for supported control, check cosyvoice/tokenizer/tokenizer.py#L280
     for i, j in enumerate(cosyvoice.inference_cross_lingual('You are a helpful assistant.<|endofprompt|>[breath]因为他们那一辈人[breath]在乡里面住的要习惯一点，[breath]邻居都很活络，[breath]嗯，都很熟悉。[breath]',
@@ -94,10 +87,22 @@ def cosyvoice3_example():
                                                         './asset/zero_shot_prompt.wav', stream=False)):
         torchaudio.save('instruct_{}.wav'.format(i), j['tts_speech'], cosyvoice.sample_rate)
 
-    # hotfix usage
-    for i, j in enumerate(cosyvoice.inference_zero_shot('高管也通过电话、短信、微信等方式对报道[j][ǐ]予好评。', 'You are a helpful assistant.<|endofprompt|>希望你以后能够做的比我还好呦。',
+    #---------------------------------------------------------------------------------------------------------------------------------------------------------
+    # 零样本使用调用模式-必须要有和语音的文本哈才能使用
+    zero_shot_prompt_text = f"希望你以后能够做的比我还好呦。"
+    # hotfix usage 零样本使用调用模式
+    for i, j in enumerate(cosyvoice.inference_zero_shot('高管也通过电话、短信、微信等方式对报道[j][ǐ]予好评。', f'You are a helpful assistant.<|endofprompt|>{zero_shot_prompt_text}',
                                                         './asset/zero_shot_prompt.wav', stream=False)):
         torchaudio.save('hotfix_{}.wav'.format(i), j['tts_speech'], cosyvoice.sample_rate)
+
+    # zero_shot usage 零样本使用调用模式
+    for i, j in enumerate(
+            cosyvoice.inference_zero_shot('八百标兵奔北坡，北坡炮兵并排跑，炮兵怕把标兵碰，标兵怕碰炮兵炮。',
+                                           f'You are a helpful assistant.<|endofprompt|>{zero_shot_prompt_text}',
+                                          './asset/zero_shot_prompt.wav', stream=False)):
+        torchaudio.save('zero_shot_{}.wav'.format(i), j['tts_speech'], cosyvoice.sample_rate)
+    #---------------------------------------------------------------------------------------------------------------------------------------------------------
+
 
 def main():
     # cosyvoice_example()
