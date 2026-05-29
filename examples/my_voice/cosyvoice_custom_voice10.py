@@ -20,6 +20,7 @@ import torch
 import torchaudio
 
 from cosyvoice.cli.cosyvoice import AutoModel
+from tools.date.Date_Utils import get_now_str_code
 from tools.files.File_Path_Utils import get_project_root
 
 # =========================================================
@@ -38,7 +39,7 @@ model_file = "Fun-CosyVoice3-0.5B"
 MODEL_DIR = os.path.join(project_root_path, "pretrained_models" , model_file)
 
 # 输出文件
-out_file = "generated_speech.wav"
+out_file = f"{get_now_str_code()}.wav"
 OUTPUT_FILE_PATH = os.path.join(project_root_path, 'asset/generator_out_path', out_file)
 
 # 每句输出目录
@@ -48,15 +49,15 @@ SEGMENT_DIR = os.path.join(project_root_path, 'asset/generator_out_path/segments
 # 必须和参考音频内容尽量一致
 PROMPT_TEXT = "大家好，今天测试一下 CosyVoice 的音色克隆效果。"
 
+# 官方推荐 system prompt
+SYSTEM_PROMPT = "You are a helpful assistant."
+
 # 要生成的文本
 SPEAK_TEXT = """
 你好，这是一段使用克隆我本人音色生成的测试语音。
 现在我们来测试一下模型的效果是否自然。
 希望整个语音听起来更加自然流畅。
 """
-
-# 官方推荐 system prompt
-SYSTEM_PROMPT = "You are a helpful assistant."
 
 
 # =========================================================
@@ -98,39 +99,6 @@ def check_audio_file(file_path):
         return False
 
 
-def split_text(text):
-    """
-    长文本分句
-    """
-
-    text = text.replace("\n", "")
-
-    separators = ["。", "！", "？", ".", "!", "?"]
-
-    result = []
-    current = ""
-
-    for char in text:
-
-        current += char
-
-        if char in separators:
-
-            current = current.strip()
-
-            if current:
-                result.append(current)
-
-            current = ""
-
-    current = current.strip()
-
-    if current:
-        result.append(current)
-
-    return result
-
-
 def load_model():
 
     print("\n📥 正在加载模型...")
@@ -153,84 +121,15 @@ def load_model():
         return None
 
 
-def generate_segment(
-    cosyvoice,
-    text,
-    segment_idx
-):
-    """
-    生成单句音频
-    """
+def generate_full_audio(cosyvoiceAutoModel):
 
-    print("\n" + "-" * 50)
-    print(f"🎤 当前生成文本:")
-    print(text)
+    print("\n" + "=" * 60)
+    print("🎯 开始生成完整语音")
+    print("=" * 60)
 
-    # 官方协议：prompt_text + endofprompt + tts_text
-    prompt = f"{PROMPT_TEXT}<|endofprompt|>{text}"
-
-    print("\n📝 Prompt:")
-    print(prompt)
-
-    all_chunks = []
-
-    try:
-
-        generator = cosyvoice.inference_zero_shot(
-            text,
-            prompt,
-            YOUR_VOICE_FILE,
-            stream=False
-        )
-
-        for idx, result in enumerate(generator):
-
-            if result is None:
-                continue
-
-            if 'tts_speech' not in result:
-                continue
-
-            speech = result['tts_speech']
-
-            if speech is None:
-                continue
-
-            if speech.shape[-1] == 0:
-                continue
-
-            print(f"✅ chunk {idx}: {speech.shape}")
-
-            all_chunks.append(speech.cpu())
-
-        if len(all_chunks) == 0:
-            print("❌ 当前句子没有生成音频")
-            return None
-
-        final_segment = torch.cat(all_chunks, dim=1)
-
-        print(f"📏 当前句子最终 shape: {final_segment.shape}")
-
-        # 保存单个音频段
-        segment_path = os.path.join(SEGMENT_DIR, f"segment_{segment_idx:02d}.wav")
-        os.makedirs(SEGMENT_DIR, exist_ok=True)
-        torchaudio.save(segment_path, final_segment, cosyvoice.sample_rate)
-        duration = final_segment.shape[1] / cosyvoice.sample_rate
-        print(f"💾 已保存单个音频段: {segment_path} (时长: {duration:.2f} 秒)")
-
-        return final_segment
-
-    except Exception as e:
-
-        print(f"❌ 当前句子生成失败: {e}")
-
-        import traceback
-        traceback.print_exc()
-
-        return None
-
-
-def generate_full_audio(cosyvoice):
+    # 构建 prompt_text（与 example.py 中 cosyvoice3_example 的 zero_shot 格式一致）
+    prompt_text = f"{SYSTEM_PROMPT}<|endofprompt|>{PROMPT_TEXT}"
+    print(f"\n📝 Prompt: {prompt_text}")
 
     # 确保输出目录存在
     output_dir = os.path.dirname(OUTPUT_FILE_PATH)
@@ -238,20 +137,36 @@ def generate_full_audio(cosyvoice):
         os.makedirs(output_dir, exist_ok=True)
         print(f"📁 创建输出目录: {output_dir}")
 
-    torchaudio.save(
-        OUTPUT_FILE_PATH,
-        final_audio,
-        cosyvoice.sample_rate
-    )
+    # 收集所有音频 chunk
+    all_chunks = []
 
-    duration = final_audio.shape[1] / cosyvoice.sample_rate
+    # 使用 inference_zero_shot 进行音色克隆
+    # 格式：inference_zero_shot(tts_text, prompt_text, prompt_wav, zero_shot_spk_id='', stream=False)
+    cosyvoice_generator = cosyvoiceAutoModel.inference_zero_shot(SPEAK_TEXT, prompt_text, YOUR_VOICE_FILE, stream=False)
+
+    for i, result in enumerate(cosyvoice_generator):
+        speech = result['tts_speech']
+        print(f"✅ chunk {i}: shape={speech.shape}")
+        all_chunks.append(speech.cpu())
+
+    if len(all_chunks) == 0:
+        print("❌ 没有生成任何音频")
+        return False
+
+    # 合并所有 chunk
+    final_audio = torch.cat(all_chunks, dim=1)
+
+    # 保存到 OUTPUT_FILE_PATH
+    torchaudio.save(OUTPUT_FILE_PATH, final_audio, cosyvoiceAutoModel.sample_rate)
+
+    duration = final_audio.shape[1] / cosyvoiceAutoModel.sample_rate
 
     print("\n" + "=" * 60)
     print("✅ 完整语音生成成功")
     print("=" * 60)
 
     print(f"📁 输出文件: {OUTPUT_FILE_PATH}")
-    print(f"📊 采样率: {cosyvoice.sample_rate}")
+    print(f"📊 采样率: {cosyvoiceAutoModel.sample_rate}")
     print(f"⏱️ 音频时长: {duration:.2f} 秒")
 
     return True

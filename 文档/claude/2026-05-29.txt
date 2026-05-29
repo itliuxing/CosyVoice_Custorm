@@ -1,0 +1,33 @@
+fix1 
+
+这个版本能生成断断续续的音频了，你能不能结合【cosyvoice_custom_voice2.py】【example.py】，然后生成一个新文件，然后看看效果，
+因为这个是可以标准生成成功的函数【cosyvoice3_example()】
+最基础的使用方式：【
+    cosyvoice = AutoModel(model_dir='pretrained_models/Fun-CosyVoice3-0.5B')
+    for i, j in enumerate(cosyvoice.inference_instruct2('收到好友从远方寄来的生日礼物，那份意外的惊喜与深深的祝福让我心中充满了甜蜜的快乐，笑容如花儿般绽放。', 'You are a helpful assistant. 请用尽可能快地语速说一句话。<|endofprompt|>',
+                                                        './asset/zero_shot_prompt.wav', stream=False)):
+        torchaudio.save('instruct_{}.wav'.format(i), j['tts_speech'], cosyvoice.sample_rate)
+】
+
+
+
+你看下我这个整合的版本【cosyvoice_custom voice10.py】有什么问题没有?
+
+
+inference_zero_shot(tts text, prompt text, prompt wav, zero shot spk id=
+你用的是 instruct2，这是带指令的。如果你想要的是零样本音色克隆，应该用 inference_zero_shot，格式是:
+，stream=False, speed=1.0, text frontend=True)
+
+
+
+fix5
+
+
+这个版本能生成断断续续的音频了，你能不能结合【cosyvoice_custom_voice10.py】【example.py】，看看cosyvoice_custom_voice10.py哪里有问题，帮我修改成跟cosyvoice3_example()里面一样
+因为这个是可以标准生成成功的函数【cosyvoice3_example()】
+最基础的使用方式：【
+    cosyvoice = AutoModel(model_dir='pretrained_models/Fun-CosyVoice3-0.5B')
+    for i, j in enumerate(cosyvoice.inference_instruct2('收到好友从远方寄来的生日礼物，那份意外的惊喜与深深的祝福让我心中充满了甜蜜的快乐，笑容如花儿般绽放。', 'You are a helpful assistant. 请用尽可能快地语速说一句话。<|endofprompt|>',
+                                                        './asset/zero_shot_prompt.wav', stream=False)):
+        torchaudio.save('instruct_{}.wav'.format(i), j['tts_speech'], cosyvoice.sample_rate)
+】

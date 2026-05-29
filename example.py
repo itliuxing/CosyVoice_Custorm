@@ -72,7 +72,7 @@ def cosyvoice3_example():
     """ CosyVoice3 Usage, check https://funaudiollm.github.io/cosyvoice3/ for more details
     """
     cosyvoice = AutoModel(model_dir='pretrained_models/Fun-CosyVoice3-0.5B')
-    # zero_shot usage
+    # zero_shot usage 零样本使用调用模式
     for i, j in enumerate(cosyvoice.inference_zero_shot('八百标兵奔北坡，北坡炮兵并排跑，炮兵怕把标兵碰，标兵怕碰炮兵炮。', 'You are a helpful assistant.<|endofprompt|>希望你以后能够做的比我还好呦。',
                                                         './asset/zero_shot_prompt.wav', stream=False)):
         torchaudio.save('zero_shot_{}.wav'.format(i), j['tts_speech'], cosyvoice.sample_rate)
@@ -82,6 +82,7 @@ def cosyvoice3_example():
                                                             './asset/zero_shot_prompt.wav', stream=False)):
         torchaudio.save('fine_grained_control_{}.wav'.format(i), j['tts_speech'], cosyvoice.sample_rate)
 
+    # 指令控制模式
     # instruct usage, for supported control, check cosyvoice/utils/common.py#L28
     for i, j in enumerate(cosyvoice.inference_instruct2('好少咯，一般系放嗰啲国庆啊，中秋嗰啲可能会咯。', 'You are a helpful assistant. 请用广东话表达。<|endofprompt|>',
                                                         './asset/zero_shot_prompt.wav', stream=False)):
